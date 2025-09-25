@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Galaxy Dino Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -14,8 +15,18 @@
     </div>
     <div id="obstacles"></div>
     <div id="score">0</div>
-    <div id="game-over">Game Over!</div>
-    <button id="restart">Restart</button>
+    <div id="menu">
+      <h2>Jump Over!</h2>
+      <div id="menu-form">
+        <input type="text" id="input--address" placeholder="Address"/>
+        <input type="text" id="input--username" placeholder="Username"/>
+        <button type="submit">Submit</button>
+        <span id="err"></span>
+      </div>
+      <button id="play"><b>PLAY AGAIN</b></button>
+      <button id="acc--change"><b>CHANGE ACCOUNT</b></button>
+      <div id="scoreboard"></div>
+    </div>
   </div>
 
   <div class="planet" aria-hidden="true"></div>
@@ -36,6 +47,6 @@
     <div class="pump-pill"></div>
   </div>
 
-  <script src="assets/js/script.js"></script>
+  <script type="module" src="./assets/js/script.js"></script>
 </body>
 </html>

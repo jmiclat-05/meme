@@ -1,8 +1,16 @@
+import { initFirebase, createPlayer, getPlayer, saveScore, getTopScores } from "./firebase.js";
+
+await initFirebase();
+
 const dino = document.getElementById("dino");
 const obstaclesContainer = document.getElementById("obstacles");
 const scoreEl = document.getElementById("score");
-const gameOverEl = document.getElementById("game-over");
-const restartBtn = document.getElementById("restart");
+const menu = document.getElementById("menu");
+const menuForm = document.getElementById("menu-form");
+const submitUserBtn = menuForm.querySelector("button");
+const startBtn = document.getElementById("play");
+const accChangeBtn = document.getElementById("acc--change");
+const scoreboard = document.getElementById("scoreboard");
 const game = document.getElementById("game");
 
 let isJumping = false;
@@ -21,8 +29,22 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
-restartBtn.addEventListener("click", () => {
-    resetGame();
+submitUserBtn.addEventListener("click", () => {
+    submitUser();
+});
+
+startBtn.addEventListener("click", () => {
+    startGame();
+});
+
+accChangeBtn.addEventListener("click", () => {
+    const h2El = menu.querySelector('h2');
+    h2El.textContent = "Jump Over!";
+    const h3 = document.querySelector('#menu h3');
+    if (h3) h3.remove();
+    startBtn.style.display = "none";
+    accChangeBtn.style.display = "none";
+    menuForm.style.display = "flex";
 });
 
 function jump() {
@@ -97,13 +119,20 @@ function moveObstacles() {
 
 function endGame() {
     gameRunning = false;
-    gameOverEl.style.display = "block";
-    restartBtn.style.display = "block";
+    const h2El = menu.querySelector('h2');
+    h2El.textContent = "Game Over!";
+    const h3El = document.createElement("h3");
+    h3El.textContent = scoreEl.textContent;
+    h2El.insertAdjacentElement('afterend', h3El);
+    startBtn.style.display = "block";
+    accChangeBtn.style.display = "block";
+    menu.style.display = "block";
     const t = document.querySelector('.trex');
     if (t) t.classList.add('is-dead');
+    submitScore(scoreEl.textContent);
 }
 
-function resetGame() {
+function startGame() {
     score = 0;
     speed = 7;
     scoreEl.textContent = 0;
@@ -111,6 +140,7 @@ function resetGame() {
     isJumping = false;
     jumpHeight = 0;
     dino.style.bottom = "0px";
+    dino.style.display = "block";
     const t = document.querySelector('.trex');
     if (t) t.classList.remove('is-dead');
     // clear obstacles and reset spawner
@@ -118,8 +148,10 @@ function resetGame() {
     obstacles = [];
     spawnTimer = 0;
     nextSpawnIn = 60 + Math.floor(Math.random() * 60);
-    gameOverEl.style.display = "none";
-    restartBtn.style.display = "none";
+    menu.style.display = "none";
+    menuForm.style.display = "none";
+    const h3 = document.querySelector('#menu h3');
+    if (h3) h3.remove();
     loop();
 }
 
@@ -184,4 +216,131 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
-loop();
+function setCookie(name, value, days) {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+}
+
+function getCookie(name) {
+  const cookies = document.cookie.split("; ");
+  for (const cookie of cookies) {
+    const [key, val] = cookie.split("=");
+    if (decodeURIComponent(key) === name) {
+      return decodeURIComponent(val);
+    }
+  }
+  return null; // not found
+}
+
+function deleteCookie(name) {
+  // Set expiry to the past
+  document.cookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+}
+
+async function displayScoreboard(limit = 10) {
+    const scores = await getTopScores(limit);
+
+    if (Array.isArray(scores) && scores.length > 0) {
+        const tbl = document.createElement("table");
+        tbl.innerHTML = `
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Name</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        `;
+
+        const tbody = tbl.querySelector("tbody");
+
+        scores.forEach((player, index) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${player.nickname || "(no name)"}</td>
+                <td>${player.score}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        scoreboard.innerHTML = "";
+        scoreboard.appendChild(tbl);
+    } else {
+        scoreboard.innerHTML = "";
+    }
+}
+
+async function submitUser() {
+    const addressEl  = document.getElementById("input--address");
+    const usernameEl = document.getElementById("input--username");
+
+    const errEl = document.getElementById("err");
+    errEl.textContent = "";
+
+    const address  = addressEl.value.trim();
+    const username = usernameEl.value.trim();
+
+    if (address && username) {
+        const exists = await getPlayer(address);
+
+        if (exists) {
+            setCookie("address", address, 7);
+            startGame();
+        } else {
+            const res = await createPlayer(address, username);
+    
+            if (res === "Parse Error") {
+                alert("Something went wrong.");
+            } else {
+                if (res === -1) {
+                    errEl.textContent = "Username already exists.";
+                } else {
+                    setCookie("address", res, 7);
+                    startGame();
+                }
+            }
+        }
+    } else {
+        errEl.textContent = "Please provide your address and username.";
+    }
+}
+
+async function submitScore(score) {
+    const address = getCookie("address");
+
+    if (address) {
+        const res = await saveScore(address, score);
+
+        if (res === "Parse Error") {
+            alert("Something went wrong.");
+        } else {
+            displayScoreboard();
+        }
+    }
+}
+
+async function renderMenu() {
+    const uid = getCookie("address");
+
+    if (uid) {
+        const player = await getPlayer(uid);
+
+        if (player.nickname) {
+            const h2El = menu.querySelector('h2');
+            h2El.textContent = `Jump ${player.nickname}!`;
+            menuForm.style.display = "none";
+            startBtn.textContent = "PLAY";
+            startBtn.style.display = "block";
+            accChangeBtn.style.display = "block";
+        } else {
+            deleteCookie("address")
+        }
+    }
+
+    menu.style.display = "block";
+}
+
+renderMenu();
+displayScoreboard();

@@ -3,7 +3,7 @@ html, body {
     padding: 0;
     height: 100%;
     width: 100%;
-    font-family: sans-serif;
+    font-family: 'Orbitron', sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -25,7 +25,7 @@ html, body {
     margin-bottom: 150px;
     left: 20%;
     z-index: 3;
-    
+    display: none;
 }
 /* Player sprite - defaults to a CSS SVG T-Rex, overridable via --player-sprite */
 .trex {
@@ -148,27 +148,6 @@ html, body {
     font-weight: bold;
     color: white;
     text-shadow: 2px 2px 4px #000;
-}
-#game-over {
-    position: absolute;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 48px;
-    font-weight: bold;
-    color: red;
-    text-shadow: 2px 2px 6px #000;
-    display: none;
-}
-#restart {
-    position: absolute;
-    top: 55%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 12px 24px;
-    font-size: 22px;
-    cursor: pointer;
-    display: none;
 }
 /* floor / ground */
 #ground {
@@ -436,103 +415,6 @@ html, body {
     z-index: 0;
     pointer-events: none;
 }
-/* Animated Barney (simple purple dino) */
-.barney {
-    position: fixed;
-    bottom: 90px;
-    left: -20vw;
-    width: 220px;
-    height: 180px;
-    z-index: 1;
-    animation: barney-walk 40s linear infinite;
-    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
-    pointer-events: none;
-}
-.barney__body {
-    position: absolute;
-    left: 40px;
-    bottom: 30px;
-    width: 140px;
-    height: 120px;
-    background: radial-gradient(circle at 40% 30%, #b26ad9 0%, #8e3dc0 60%, #6a25a1 100%);
-    border-radius: 70% 70% 60% 60% / 70% 70% 40% 40%;
-}
-.barney__belly {
-    position: absolute;
-    left: 30px;
-    top: 38px;
-    width: 70px;
-    height: 80px;
-    background: radial-gradient(circle at 50% 40%, #53c57a 0%, #2ea95a 80%);
-    border-radius: 50% 50% 45% 45%;
-}
-.barney__eye {
-    position: absolute;
-    left: 94px;
-    top: 30px;
-    width: 14px;
-    height: 14px;
-    background: #111;
-    border-radius: 50%;
-    box-shadow: 3px 2px 0 0 rgba(255,255,255,0.6) inset;
-}
-.barney__mouth {
-    position: absolute;
-    left: 86px;
-    top: 58px;
-    width: 34px;
-    height: 14px;
-    border-bottom: 4px solid #2a113d;
-    border-radius: 0 0 24px 24px;
-}
-.barney__arm {
-    position: absolute;
-    width: 20px;
-    height: 56px;
-    background: linear-gradient(#8e3dc0, #6a25a1);
-    border-radius: 20px;
-    top: 80px;
-    transform-origin: top center;
-    animation: arm-swing 1s ease-in-out infinite;
-}
-.barney__arm--l { left: 52px; }
-.barney__arm--r { left: 144px; animation-delay: .5s; }
-.barney__leg {
-    position: absolute;
-    width: 26px;
-    height: 70px;
-    background: linear-gradient(#8e3dc0, #6a25a1);
-    border-radius: 20px;
-    bottom: 0;
-    transform-origin: top center;
-    animation: leg-walk 1s ease-in-out infinite;
-}
-.barney__leg--l { left: 78px; }
-.barney__leg--r { left: 118px; animation-delay: .5s; }
-.barney__tail {
-    position: absolute;
-    left: 0;
-    bottom: 60px;
-    width: 100px;
-    height: 50px;
-    background: radial-gradient(circle at 20% 50%, #8e3dc0 0%, #6a25a1 80%);
-    border-radius: 50% 0 50% 50% / 60% 0 60% 60%;
-    transform: rotate(-18deg);
-}
-@keyframes barney-walk {
-    0% { transform: translateX(0); opacity: .0; }
-    5% { opacity: 1; }
-    50% { transform: translateX(80vw); }
-    100% { transform: translateX(120vw); opacity: .0; }
-}
-@keyframes arm-swing {
-    0%, 100% { transform: rotate(14deg); }
-    50% { transform: rotate(-12deg); }
-}
-@keyframes leg-walk {
-    0%, 100% { transform: rotate(-10deg); }
-    50% { transform: rotate(12deg); }
-}
 
 .star {
     position: absolute;
@@ -548,4 +430,122 @@ html, body {
 @keyframes twinkle {
     0% { opacity: 0.25; transform: scale(1); }
     100% { opacity: 1; transform: scale(1.5); }
+}
+
+
+
+/* ===== Menu box container ===== */
+#menu {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 700px;
+    margin: auto;
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    display: none;
+}
+
+#menu h2 {
+  margin-top: 0;
+  font-family: 'Orbitron', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #9cf;
+  text-align: center;
+}
+
+#menu h3 {
+  margin: 0.2rem 0 1.5rem;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  color: #c0d8ff;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+/* ===== Form with inputs ===== */
+#menu-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+#menu-form input {
+  flex: 1 1 200px;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+}
+#menu-form input::placeholder { color: #aaa; }
+
+#menu-form button {
+  background: linear-gradient(135deg,#7b2ff7,#2af598);
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+#menu-form button:hover { opacity: 0.85; }
+
+#menu-form #err {
+    color: red;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+/* ===== Table ===== */
+#menu table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+#menu table th,
+#menu table td {
+  text-align: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+#menu table th {
+  background: rgba(255,255,255,0.08);
+  font-weight: 600;
+  color: #9cf;
+}
+
+/* ===== Action button ===== */
+#play, #acc--change {
+  display: block;
+  width: 100%;
+  background: linear-gradient(135deg,#2af598,#009efd);
+  border: none;
+  border-radius: 10px;
+  padding: 0.8rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: none;
+  margin-top: 1rem;
+}
+#play:hover, #acc--change:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
 }
