@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Galaxy Dino Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <div class="stars" aria-hidden="true"></div>
+  <div id="game">
+    <div id="ground" aria-hidden="true"></div>
+    <div id="dino">
+      <div class="trex trex--gif" aria-hidden="true" style="--player-sprite: url('../media/among-us.gif'); --player-frame-w: 300px; --player-frame-h: 400px;"></div>
+    </div>
+    <div id="obstacles"></div>
+    <div id="score">0</div>
+    <div id="menu">
+      <h2>Jump Over!</h2>
+      <div id="menu-form">
+        <input type="text" id="input--address" placeholder="Address"/>
+        <input type="text" id="input--username" placeholder="Username"/>
+        <button type="submit">Submit</button>
+        <span id="err"></span>
+      </div>
+      <button id="play"><b>PLAY AGAIN</b></button>
+      <button id="acc--change"><b>CHANGE ACCOUNT</b></button>
+      <div id="scoreboard"></div>
+    </div>
+  </div>
+
+  <div class="planet" aria-hidden="true"></div>
+  <div class="planet--solana planet--ringed planet--lg planet--pos-a" aria-hidden="true" title="">
+    <div class="sol-band sb1"></div>
+    <div class="sol-band sb2"></div>
+    <div class="sol-band sb3"></div>
+  </div>
+  <div class="planet--solana planet--sm planet--pos-b" aria-hidden="true" title="">
+    <div class="sol-band sb1"></div>
+    <div class="sol-band sb2"></div>
+    <div class="sol-band sb3"></div>
+  </div>
+  <div class="planet--pump planet--ringed planet--pos-c" aria-hidden="true" title="">
+    <div class="pump-pill"></div>
+  </div>
+  <div class="planet--pump planet--pos-d planet--sm" aria-hidden="true" title="">
+    <div class="pump-pill"></div>
+  </div>
+
+  <script type="module" src="./assets/js/script.js"></script>
+</body>
+</html>

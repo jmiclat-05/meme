@@ -1,0 +1,551 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-family: 'Orbitron', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: black;
+}
+#game {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /* background: black; */
+    background-size: cover;
+    /* border: 3px solid #333; */
+    overflow: hidden;
+}
+#dino {
+    width: 60px;
+    height: 60px;
+    position: absolute;
+    margin-bottom: 150px;
+    left: 20%;
+    z-index: 3;
+    display: none;
+}
+/* Player sprite - defaults to a CSS SVG T-Rex, overridable via --player-sprite */
+.trex {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: var(--player-frame-w, 60px);
+    height: var(--player-frame-h, 60px);
+    background-image: var(--player-sprite, url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="crispEdges"><rect width="64" height="64" fill="none"/><g fill="%23222"><path d="M30 10h10v6H30zM40 12h8v6h-8zM26 16h14v6H26zM20 22h22v6H20zM18 28h24v6H18zM14 34h22v6H14zM10 40h24v6H10zM36 40h10v6H36zM44 34h8v6h-8zM48 28h6v6h-6zM14 46h10v6H14zM28 46h10v6H28zM40 46h8v6h-8zM8 52h14v6H8zM24 52h10v6H24zM36 52h8v6h-8zM44 50h8v6h-8zM50 44h6v6h-6zM54 38h4v6h-4zM56 32h4v6h-4zM12 30h6v6h-6z"/><rect x="44" y="16" width="2" height="2" fill="%23fff"/></g></svg>'));
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+    filter: drop-shadow(1px 1px 0 #000);
+    will-change: background-position;
+    animation-play-state: var(--run-state, running);
+}
+/* horizontal strip (default): frames laid out left→right */
+.trex.trex--h {
+    background-position: 0% 50%;
+    background-size: calc(var(--player-frames, 1) * 100%) 100%;
+    animation: trex-run-x var(--player-speed, 0.9s) steps(var(--player-frames, 1)) infinite;
+}
+/* vertical strip: frames laid out top→bottom */
+.trex.trex--v {
+    background-position: 50% 0%;
+    background-size: 100% calc(var(--player-frames, 1) * 100%);
+    animation: trex-run-y var(--player-speed, 0.9s) steps(var(--player-frames, 1)) infinite;
+}
+@keyframes trex-run-x {
+    from { background-position: 0% 50%; }
+    to { background-position: 100% 50%; }
+}
+@keyframes trex-run-y {
+    from { background-position: 50% 0%; }
+    to { background-position: 50% 100%; }
+}
+.trex.is-dead { animation-play-state: paused; }
+/* GIF mode: use an animated GIF without sprite-step animation */
+.trex.trex--gif {
+    background-position: center center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    animation: none;
+}
+#obstacles { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.rock {
+    position: absolute;
+    bottom: 0;
+    margin-bottom: 120px;
+    right: -30px;
+    width: 64px;
+    height: 44px;
+    border-radius: 20px;
+    background:
+    radial-gradient(circle at 30% 35%, rgba(255,255,255,0.12) 0 35%, transparent 36%),
+    radial-gradient(circle at 70% 45%, rgba(255,255,255,0.1) 0 28%, transparent 29%),
+    radial-gradient(circle at 55% 70%, rgba(0,0,0,0.15) 0 36%, transparent 37%),
+    radial-gradient(circle at 20% 70%, rgba(0,0,0,0.12) 0 28%, transparent 29%),
+    linear-gradient(180deg, #8a7b6a 0%, #6e6052 60%, #5a4f44 100%);
+    box-shadow:
+    inset -8px -10px 14px rgba(0,0,0,0.25),
+    0 6px 10px rgba(0,0,0,0.35);
+    transform: translateZ(0);
+}
+
+.rock::before,
+.rock::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    border-radius: 50%;
+    background:
+    radial-gradient(circle at 35% 40%, rgba(255,255,255,0.12) 0 38%, transparent 39%),
+    radial-gradient(circle at 60% 65%, rgba(0,0,0,0.12) 0 40%, transparent 41%),
+    linear-gradient(180deg, #9a8c7a 0%, #7a6c5e 60%, #63584d 100%);
+    box-shadow:
+    inset -8px -10px 14px rgba(0,0,0,0.22),
+    0 5px 8px rgba(0,0,0,0.32);
+}
+
+.rock::before {
+    left: -18px;
+    width: 42px;
+    height: 34px;
+}
+
+.rock::after {
+    right: -14px;
+    width: 36px;
+    height: 28px;
+}
+
+/* rock variants for visual diversity */
+.rock--dark {
+    background:
+    radial-gradient(circle at 30% 35%, rgba(255,255,255,0.10) 0 35%, transparent 36%),
+    radial-gradient(circle at 70% 45%, rgba(255,255,255,0.08) 0 28%, transparent 29%),
+    radial-gradient(circle at 55% 70%, rgba(0,0,0,0.18) 0 36%, transparent 37%),
+    radial-gradient(circle at 20% 70%, rgba(0,0,0,0.14) 0 28%, transparent 29%),
+    linear-gradient(180deg, #756756 0%, #5f5448 60%, #4c433a 100%);
+}
+
+.rock--light {
+    background:
+    radial-gradient(circle at 30% 35%, rgba(255,255,255,0.14) 0 35%, transparent 36%),
+    radial-gradient(circle at 70% 45%, rgba(255,255,255,0.12) 0 28%, transparent 29%),
+    radial-gradient(circle at 55% 70%, rgba(0,0,0,0.12) 0 36%, transparent 37%),
+    radial-gradient(circle at 20% 70%, rgba(0,0,0,0.10) 0 28%, transparent 29%),
+    linear-gradient(180deg, #9a8c7a 0%, #7a6c5e 60%, #63584d 100%);
+}
+
+.rock--wide { width: 78px; height: 40px; border-radius: 22px; }
+.rock--tall { width: 52px; height: 56px; border-radius: 18px; }
+.rock--round { width: 58px; height: 58px; border-radius: 50%; }
+#score {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 28px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 4px #000;
+}
+/* floor / ground */
+#ground {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 150px;
+    z-index: 1;
+    background:
+    /* tiny speckles */
+    radial-gradient(circle at 18% 30%, rgba(255,255,255,0.05) 0 2px, transparent 3px),
+    radial-gradient(circle at 62% 55%, rgba(255,255,255,0.05) 0 2px, transparent 3px),
+    radial-gradient(circle at 82% 40%, rgba(255,255,255,0.05) 0 2px, transparent 3px),
+    /* crater rows (tiled) */
+    radial-gradient(24px 12px at 20px 22px, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.18) 55%, rgba(0,0,0,0.0) 65%),
+    radial-gradient(34px 16px at 64px 26px, rgba(0,0,0,0.26) 0%, rgba(0,0,0,0.16) 55%, rgba(0,0,0,0.0) 65%),
+    radial-gradient(18px 9px at 120px 18px, rgba(0,0,0,0.24) 0%, rgba(0,0,0,0.14) 55%, rgba(0,0,0,0.0) 65%),
+    /* subtle horizontal texture */
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 2px, rgba(255,255,255,0.02) 2px 7px),
+    /* rocky base to match obstacle */
+    linear-gradient(180deg, #8a7b6a 0%, #6e6052 35%, #5a4f44 70%, #4a4239 100%);
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat-x, repeat-x, repeat-x, repeat, no-repeat;
+    background-size: auto, auto, auto, 240px 100%, 300px 100%, 360px 100%, 280px 100%, 100% 100%;
+    background-position: 0 0, 0 0, 0 0, 0 12px, 0 18px, 0 10px, 0 0, 0 0;
+    box-shadow: inset 0 10px 18px rgba(0,0,0,0.55);
+    border-top: 2px solid rgba(255,255,255,0.06);
+    animation: ground-scroll 9s linear infinite;
+}
+
+@keyframes ground-scroll {
+    0%   { background-position: 0 0, 0 0, 0 0, 0 12px, 0 18px, 0 10px, 0 0, 0 0; }
+    100% { background-position: 0 0, 0 0, 0 0, -240px 12px, -300px 18px, -360px 10px, -280px 0, 0 0; }
+}
+
+#game { z-index: 2; }
+
+.planet {
+    position: fixed;
+    top: 12vh;
+    left: -20vw;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #e2e2e2 0%, #cfcfcf 45%, #b0b0b0 70%, #8a8a8a 100%);
+    box-shadow: 0 0 18px rgba(200, 200, 200, 0.35), inset -12px -16px 26px rgba(0, 0, 0, 0.35);
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.15));
+    animation: planet-drift 32s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* craters */
+.planet::before,
+.planet::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+    radial-gradient(circle at 38% 42%, rgba(0,0,0,0.25) 0 10%, transparent 11%),
+    radial-gradient(circle at 60% 30%, rgba(0,0,0,0.2) 0 7%, transparent 8%),
+    radial-gradient(circle at 70% 58%, rgba(0,0,0,0.22) 0 9%, transparent 10%),
+    radial-gradient(circle at 45% 70%, rgba(0,0,0,0.18) 0 6%, transparent 7%),
+    radial-gradient(circle at 25% 60%, rgba(0,0,0,0.2) 0 5%, transparent 6%),
+    radial-gradient(circle at 30% 25%, rgba(0,0,0,0.16) 0 4%, transparent 5%);
+    pointer-events: none;
+}
+
+.planet::after {
+    background:
+    radial-gradient(circle at 35% 40%, rgba(255,255,255,0.15) 0 12%, transparent 13%),
+    radial-gradient(circle at 62% 32%, rgba(255,255,255,0.1) 0 9%, transparent 10%),
+    radial-gradient(circle at 72% 60%, rgba(255,255,255,0.12) 0 11%, transparent 12%),
+    radial-gradient(circle at 47% 72%, rgba(255,255,255,0.1) 0 8%, transparent 9%),
+    radial-gradient(circle at 27% 62%, rgba(255,255,255,0.1) 0 7%, transparent 8%);
+    mix-blend-mode: overlay;
+}
+
+@keyframes planet-drift {
+    0% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+    opacity: 0;
+    }
+    5% {
+    opacity: 1;
+    }
+    50% {
+    transform: translateX(70vw) translateY(-1vh) rotate(180deg);
+    }
+    100% {
+    transform: translateX(120vw) translateY(0.8vh) rotate(360deg);
+    opacity: 0;
+    }
+}
+
+/* Solana token planet (disguised) */
+.planet--solana {
+    position: fixed;
+    top: 20vh;
+    left: -25vw;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background:
+    radial-gradient(circle at 32% 30%, #1a1a22 0%, #101018 55%, #08080e 100%); /* spherical base */
+    background-size: 100% 100%;
+    background-position: 50% 50%;
+    box-shadow:
+    0 0 26px rgba(153, 69, 255, 0.864),
+    0 0 18px rgba(20, 241, 149, 0.771),
+    inset -10px -14px 24px rgba(0, 0, 0, 0.45);
+    filter: drop-shadow(0 0 12px rgba(153, 69, 255, 0.747));
+    animation: solana-drift 34s linear infinite;
+    animation-delay: 6s;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.sol-band {
+    position: absolute;
+    left: 50%;
+    width: 78%;
+    height: 14%;
+    background: linear-gradient(90deg, #14F195 0%, #35c6d1 35%, #6c77e6 68%, #9945FF 100%);
+    border-radius: 12px;
+    transform: translateX(-50%) skewX(-18deg);
+    clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+    box-shadow: 0 0 8px rgba(153,69,255,0.25);
+}
+
+.sol-band.sb1 { top: 23%; }
+.sol-band.sb2 { top: 43%; }
+.sol-band.sb3 { top: 63%; }
+
+/* ring modifier: use two layers so planet covers the back ring */
+.planet--ringed { position: fixed; }
+.planet--ringed::before,
+.planet--ringed::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 250px;
+    height: 56px;
+    margin: -28px 0 0 -125px;
+    border-radius: 50%;
+    border: 5px solid rgb(153, 69, 255);
+    transform: rotate(-18deg);
+    pointer-events: none;
+}
+/* back ring sits behind the planet */
+.planet--ringed::before {
+    z-index: 0;
+    box-shadow: 0 0 10px rgba(153, 69, 255, 0.2);
+    opacity: 0.9;
+}
+/* front ring sits above the planet */
+.planet--ringed::after {
+    z-index: 2;
+    box-shadow: 0 0 18px rgba(153, 69, 255, 0.35);
+}
+
+/* pump.fun planets use a green ring color */
+.planet--pump.planet--ringed::before,
+.planet--pump.planet--ringed::after {
+    border-color: rgba(30, 203, 123, 0.75);
+}
+.planet--pump.planet--ringed::after { box-shadow: 0 0 18px rgba(30, 203, 123, 0.4); }
+.planet--pump.planet--ringed::before { box-shadow: 0 0 12px rgba(30, 203, 123, 0.28); }
+
+/* size modifiers */
+.planet--sm { width: 90px; height: 90px; }
+.planet--lg { width: 150px; height: 150px; }
+
+/* position/timing modifiers */
+.planet--pos-a { top: 28vh; left: -15vw; animation-delay: 2s; }
+.planet--pos-b { top: 8vh; left: -30vw; animation-delay: 12s; }
+
+@keyframes solana-drift {
+    0% {
+    transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+    opacity: 0;
+    }
+    8% { opacity: 1; }
+    50% {
+    transform: translateX(68vw) translateY(1.2vh) rotate(180deg) scale(1.02);
+    }
+    100% {
+    transform: translateX(125vw) translateY(-0.6vh) rotate(360deg) scale(1);
+    opacity: 0;
+    }
+}
+
+/* Pump.fun token planet (disguised pill logo) */
+.planet--pump {
+    position: fixed;
+    top: 26vh;
+    left: -22vw;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, #1a1a22 0%, #0f0f16 55%, #09090f 100%);
+    box-shadow:
+    0 0 26px rgba(30, 203, 123, 0.28),
+    inset -10px -14px 24px rgba(0, 0, 0, 0.45);
+    filter: drop-shadow(0 0 12px rgba(30, 203, 123, 0.18));
+    animation: pump-drift 36s linear infinite;
+    animation-delay: 4s;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.pump-pill {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 64%;
+    height: 40%;
+    transform: translate(-50%, -50%) rotate(-22deg);
+    border-radius: 9999px;
+    background:
+    linear-gradient(90deg, #1ecb7b 0 50%, #ffffff 50% 100%);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.35), inset 0 0 0 6px rgba(0,0,0,0.22);
+}
+
+.pump-pill::before {
+    content: "";
+    position: absolute;
+    left: 14%;
+    top: 22%;
+    width: 18%;
+    height: 18%;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.85);
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    transform: rotate(20deg);
+    opacity: 0.85;
+}
+
+@keyframes pump-drift {
+    0% {
+    transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+    opacity: 0;
+    }
+    10% { opacity: 1; }
+    50% {
+    transform: translateX(72vw) translateY(-0.8vh) rotate(180deg) scale(1.01);
+    }
+    100% {
+    transform: translateX(125vw) translateY(0.6vh) rotate(360deg) scale(1);
+    opacity: 0;
+    }
+}
+
+/* additional positions for pump planets */
+.planet--pos-c { top: 30vh; left: -18vw; animation-delay: 8s; }
+.planet--pos-d { top: 12vh; left: -35vw; animation-delay: 16s; }
+
+/* stars */
+.stars {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.8;
+    box-shadow: 0 0 4px rgba(255,255,255,0.6);
+    animation: twinkle 3s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+    0% { opacity: 0.25; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1.5); }
+}
+
+
+
+/* ===== Menu box container ===== */
+#menu {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 700px;
+    margin: auto;
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    display: none;
+}
+
+#menu h2 {
+  margin-top: 0;
+  font-family: 'Orbitron', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #9cf;
+  text-align: center;
+}
+
+#menu h3 {
+  margin: 0.2rem 0 1.5rem;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  color: #c0d8ff;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+/* ===== Form with inputs ===== */
+#menu-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+#menu-form input {
+  flex: 1 1 200px;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+}
+#menu-form input::placeholder { color: #aaa; }
+
+#menu-form button {
+  background: linear-gradient(135deg,#7b2ff7,#2af598);
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+#menu-form button:hover { opacity: 0.85; }
+
+#menu-form #err {
+    color: red;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+/* ===== Table ===== */
+#menu table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+#menu table th,
+#menu table td {
+  text-align: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+#menu table th {
+  background: rgba(255,255,255,0.08);
+  font-weight: 600;
+  color: #9cf;
+}
+
+/* ===== Action button ===== */
+#play, #acc--change {
+  display: block;
+  width: 100%;
+  background: linear-gradient(135deg,#2af598,#009efd);
+  border: none;
+  border-radius: 10px;
+  padding: 0.8rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: none;
+  margin-top: 1rem;
+}
+#play:hover, #acc--change:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
